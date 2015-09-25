@@ -298,8 +298,7 @@ footstep-parameter"))
       ;; 3. level0  ->   level0  -> level0
       ;; 4. level0  ->   level1  -> level2 (not supported)
       ;; First is this the case of 1?
-      (if (not (eq (get (send state :prev-coords) :projecting-grid)
-                   (get current-step-coords :projecting-grid)))
+      (if nil
           ;; case 1
           (let ((next-coord-candidate
                  (send footstep-param :transition-second-step-coords

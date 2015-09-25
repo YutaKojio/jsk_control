@@ -158,7 +158,7 @@
             (t
              (walking-pose *robot* :root-link-height-offset -70))
             )
-           (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+           (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
            (send *ri* :wait-interpolation))))
   (cond ((= (send goal :goal :strategy)
             jsk_footstep_msgs::ExecFootstepsGoal::*RESUME*)
@@ -591,7 +591,7 @@
          (setq *footstep-list* nil)
          (when *realp*
            (walking-pose *robot* :root-link-height-offset 0)
-           (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+           (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
            (send *ri* :wait-interpolation))
          (send server :set-succeeded (send server :result))
          (when *auto-lookground*
@@ -670,7 +670,7 @@
   ;; Check if we need to move robot or not
   (when (need-to-send-angle-vector-p *robot*)
     ;;(send *ri* :angle-vector (send *robot* :angle-vector) 5000)
-    (send *ri* :angle-vector (send *robot* :angle-vector) 2000)
+    (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
     (send *ri* :wait-interpolation))
   )
 
@@ -701,7 +701,7 @@
   ;; Check if we need to move robot or not
   (when (need-to-send-angle-vector-p *robot*)
     ;;(send *ri* :angle-vector (send *robot* :angle-vector) 5000)
-    (send *ri* :angle-vector (send *robot* :angle-vector) 2000)
+    (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
     (send *ri* :wait-interpolation))
   )
 
@@ -719,7 +719,7 @@
        )
     (robot-angle-straight))
   (when (need-to-send-angle-vector-p *robot*)
-    (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+    (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
     (send *ri* :wait-interpolation))
   )
 
@@ -741,6 +741,9 @@
         :stair-trajectory-way-point-offset #f(0.03 -0.0 0)
         :swing-trajectory-delay-time-offset 0.2
         :default-double-support-static-ratio 0.0
+        :default-double-support-ratio 0.35
+        :toe-angle 0 :heel-angle 0
+        :default-step-time 0.6
         ))
 
 (defun set-parameter-for-stair ()
@@ -809,13 +812,14 @@
   ;;       :default-step-height 0.05)
   (send *ri* :set-gait-generator-param
         ;;:default-orbit-type :cycloid
-        :default-orbit-type :stair
+        :default-orbit-type :cycloiddelay
+        :swing-trajectory-delay-time-offset 0.15
         :toe-angle 0 :heel-angle 0
-        :default-step-time 1.7
-        :default-double-support-ratio 0.29
-        :default-double-support-static-ratio 0.117
+        :default-step-time 0.6
+        :default-double-support-ratio 0.35
+        :default-double-support-static-ratio 0.0
         ;;:default-double-support-ratio 0.16
-        :default-step-height 0.05)
+        :default-step-height 0.065)
   ;; [[0.010, 0.01, 0], [0.010, -0.01, 0]]
   ;; (send *ri* :set-auto-balancer-param :default-zmp-offsets
   ;;       (list (float-vector 10 10 0) (float-vector 10 -10 0)))
@@ -861,6 +865,7 @@
                      :execute-cb 'execute-cb
                      :preempt-cb 'preempt-cb)))
     (ros::rate 10)
+    (send *ri* :set-gait-generator-param :default-step-time 0.6)
     (ros::ros-info "footstep controller is ready")
     (while (ros::ok)
       (send s :worker)

@@ -298,36 +298,26 @@ footstep-parameter"))
       ;; 3. level0  ->   level0  -> level0
       ;; 4. level0  ->   level1  -> level2 (not supported)
       ;; First is this the case of 1?
-      (if nil
-          ;; case 1
-          (let ((next-coord-candidate
-                 (send footstep-param :transition-second-step-coords
-                       current-step-coords
-                       next-leg
-                       (send state :step-name))))
-            (project-and-remove-on-grids
-             next-coord-candidate (list current-grid) t))
-        ;; case 2-4
-        (let ((same-level-candidate       ;case  3
-                (send footstep-param :same-grid-next-steps
-                      current-step-coords
-                      next-leg
-                      (send state :step-name)))
-              (different-level-candidate ;case 2
-               (send footstep-param :transition-first-step-coords
-                       current-step-coords
-                       next-leg
-                       (send state :step-name))))
-          (append
-           (remove-not-on-grids same-level-candidate current-grid)
-           (remove-if-not
-            #'(lambda (x)
-                (check-transition-limit current-step-coords (cdr x) transition-limit))
-            (project-and-remove-on-grids
-             different-level-candidate grids (list current-grid) t
-             ;; For roll-paranoid
-             roll-paranoid g-sensor-coords current-grid
-             next-leg current-step-coords)))))))
+      (let ((same-level-candidate       ;case  3
+             (send footstep-param :same-grid-next-steps
+                   current-step-coords
+                   next-leg
+                   (send state :step-name)))
+            (different-level-candidate ;case 2
+             (send footstep-param :transition-first-step-coords
+                   current-step-coords
+                   next-leg
+                   (send state :step-name))))
+        (append
+         (remove-not-on-grids same-level-candidate current-grid)
+         (remove-if-not
+          #'(lambda (x)
+              (check-transition-limit current-step-coords (cdr x) transition-limit))
+          (project-and-remove-on-grids
+           different-level-candidate grids (list current-grid) t
+           ;; For roll-paranoid
+           roll-paranoid g-sensor-coords current-grid
+           next-leg current-step-coords))))))
   (:successors (state &key (verbose nil))
     (bench-timer
      successors-timer
@@ -837,13 +827,13 @@ building and searching."
   (:gen-right-footstep ()
     (send self :_gen-footstep *footstep-successors* :right t))
   (:gen-left-first-transition-footstep ()
-    (send self :_gen-footstep *footstep-transifion-first-successors* :left-first-transition))
+    (send self :_gen-footstep *footstep-transition-first-successors* :left-first-transition))
   (:gen-right-first-transition-footstep ()
-    (send self :_gen-footstep *footstep-transifion-first-successors* :right-first-transition t))
+    (send self :_gen-footstep *footstep-transition-first-successors* :right-first-transition t))
   (:gen-left-second-transition-footstep ()
-    (send self :_gen-footstep *footstep-transifion-second-successors* :left-second-transition))
+    (send self :_gen-footstep *footstep-transition-second-successors* :left-second-transition))
   (:gen-right-second-transition-footstep ()
-    (send self :_gen-footstep *footstep-transifion-second-successors* :right-second-transition t))
+    (send self :_gen-footstep *footstep-transition-second-successors* :right-second-transition t))
   (:gen-step (l/r name coords)
     (let ((s (cons name coords)))
       (case l/r

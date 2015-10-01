@@ -18,7 +18,7 @@
 ;;(setq *realp* nil)
 ;; :standing
 ;; :plane
-;; :climing-up
+;; :climbing-up
 (setq *walking-state* :standing)
 (setq *prev-footstep* nil)
 (setq *footstep-list* nil)
@@ -158,7 +158,7 @@
             (t
              (walking-pose *robot* :root-link-height-offset -70))
             )
-           (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
+           (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
            (send *ri* :wait-interpolation))))
   (cond ((= (send goal :goal :strategy)
             jsk_footstep_msgs::ExecFootstepsGoal::*RESUME*)
@@ -255,7 +255,7 @@
   (rolling-plane-p *current-plane*))
 
 (defun different-height (st)
-  (eq st :climing-up))
+  (eq st :climbing-up))
 
 (defun quaternion-from-two-vectors (a b)
   (let* ((v0 (normalize-vector a))
@@ -288,50 +288,50 @@
         (H   H   H+  S   S   S)
         (H   H   H-  S   S   S)
         (H   P+  H0  S   S   H)
-        (H   P+  H+  S   S   S)
-        (H   P+  H-  S   S   S)
+        (H   P+  H+  S   S   H)
+        (H   P+  H-  S   S   H)
         (H   P-  H0  S   S   H)
         (H   P-  H+  S   S   H)
-        (H   P-  H-  S   S   S)
+        (H   P-  H-  S   S   H)
         (H   R   H0  S   R   H)
-        (H   R   H+  S   R   S)
+        (H   R   H+  S   R   H)
         (H   R   H-  S   R   H)
         (P+  H   H0  S   S   H)
-        (P+  H   H+  S   S   S)
+        (P+  H   H+  S   S   H)
         (P+  H   H-  S   S   H)
-        (P+  P+  H0  S   S   P)
-        (P+  P+  H+  S   S   S)
+        (P+  P+  H0  S   S   R)
+        (P+  P+  H+  S   S   H)
         (P+  P+  H-  S   S   H)
         (P+  P-  H0  S   S   H)
         (P+  P-  H+  S   S   H)
         (P+  P-  H-  S   S   H)
         (P+  R   H0  S   R   H)
-        (P+  R   H+  S   R   S)
+        (P+  R   H+  S   R   H)
         (P+  R   H-  S   R   H)
         (P-  H   H0  S   S   H)
-        (P-  H   H+  S   S   S)
-        (P-  H   H-  S   S   S)
-        (P-  P+  H0  S   S   S)
-        (P-  P+  H+  S   S   S)
-        (P-  P+  H-  S   S   S)
-        (P-  P-  H0  S   S   P)
+        (P-  H   H+  S   S   H)
+        (P-  H   H-  S   S   H)
+        (P-  P+  H0  S   S   H)
+        (P-  P+  H+  S   S   H)
+        (P-  P+  H-  S   S   H)
+        (P-  P-  H0  S   S   R)
         (P-  P-  H+  S   S   H)
-        (P-  P-  H-  S   S   S)
+        (P-  P-  H-  S   S   H)
         (P-  R   H0  S   R   H)
-        (P-  R   H+  S   R   S)
-        (P-  R   H-  S   R   S)
+        (P-  R   H+  S   R   H)
+        (P-  R   H-  S   R   H)
         (R   H   H0  S   S   H)
-        (R   H   H+  R   S   S)
-        (R   H   H-  R   S   S)
+        (R   H   H+  R   S   H)
+        (R   H   H-  R   S   H)
         (R   P+  H0  R   S   H)
-        (R   P+  H+  R   S   S)
-        (R   P+  H-  R   S   S)
+        (R   P+  H+  R   S   H)
+        (R   P+  H-  R   S   H)
         (R   P-  H0  R   S   H)
         (R   P-  H+  R   S   H)
         (R   P-  H-  R   S   H)
         (R   R   H0  R   R   R)
-        (R   R   H+  R   R   S)
-        (R   R   H-  R   R   S)))
+        (R   R   H+  R   R   H)
+        (R   R   H-  R   R   H)))
 
 (defun compute-plane-condition (step)
   (let* ((origin (compute-current-origin))
@@ -347,21 +347,21 @@
          (cond ((> (elt (send (send first-step :transformation next-step)
                               :worldpos) 2)
                    *height-threshold*)
-                :climing-up)
+                :climbing-up)
                ((< (elt (send (send first-step :transformation next-step)
                               :worldpos) 2)
                    (- *height-threshold*))
-                :climing-down)
+                :climbing-down)
                (t
                 :plane)))
         ((> (elt (send (send first-step :transformation next-step)
                        :worldpos) 2)
             *height-threshold*)
-         :climing-up)
+         :climbing-up)
         ((< (elt (send (send first-step :transformation next-step)
                        :worldpos) 2)
             (- *height-threshold*))
-         :climing-down)
+         :climbing-down)
         (t
          :plane)))
 
@@ -384,9 +384,9 @@
                'P-)
               (t
                'H))
-        (cond ((eq height :climing-up)
+        (cond ((eq height :climbing-up)
                'H+)
-              ((eq height :climing-down)
+              ((eq height :climbing-down)
                'H-)
               (t
                'H0))))
@@ -401,9 +401,9 @@
        (let ((param-s (elt candidate 5)))
          (ros::ros-info "set ri parameter for ~A" param-s)
          (cond ((eq param-s 'S)
-                (if (eq from-s 'P-)
-                    (set-parameter-for-rolling)
-                  (set-parameter-for-stair)))
+                ;; (if (eq from-s 'P-)
+                ;;     (set-parameter-for-rolling)
+                (set-parameter-for-stair))
                ((eq param-s 'H)
                 (set-parameter-for-rolling))
                ((eq param-s 'R)
@@ -462,7 +462,7 @@
     ;; set *current-plane* and *next-plane*
     (setq *current-plane* (compute-plane-condition first-step))
     (setq *next-plane* (compute-plane-condition next-step))
-    ;; :standing, :climing-up or :plane
+    ;; :standing, :climbing-up or :plane
     (setq next (compute-height-transition first-step next-step))
     (ros::ros-info "first-step: ~A" first-step)
     (ros::ros-info "next-step: ~A" next-step)
@@ -501,8 +501,8 @@
                   (setq second-step (car *footstep-list*))
                   (change-standing-mode first-step second-step)
                   ;; Send two footsteps at once for different plane transition
-                  (if (or (eq *walking-state* :climing-up) ;hack
-                          (eq *walking-state* :climing-down) ;hack
+                  (if (or (eq *walking-state* :climbing-up) ;hack
+                          (eq *walking-state* :climbing-down) ;hack
                           (not (eq *current-plane* *next-plane*)))
                       (progn
                         (let ((third-step (cadr *footstep-list*)))
@@ -576,6 +576,16 @@
          (setq *footstep-list* nil)
          (send server :set-succeeded (send server :result))
          (setq *last-step* nil)        ;clear for next
+         (send *ri* :set-gait-generator-param
+               ;;:default-orbit-type :cycloid
+               :default-orbit-type :cycloiddelay
+               :swing-trajectory-delay-time-offset 0.15
+               :toe-angle 0 :heel-angle 0
+               :default-step-time 0.8
+               :default-double-support-ratio 0.35
+               :default-double-support-static-ratio 0.0
+               ;;:default-double-support-ratio 0.16
+               :default-step-height 0.065)
          (when *auto-lookground*
            (lookaround-ground)))
         ((eq *interruptible-mode* :non-interrupptible)
@@ -591,7 +601,7 @@
          (setq *footstep-list* nil)
          (when *realp*
            (walking-pose *robot* :root-link-height-offset 0)
-           (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
+           (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
            (send *ri* :wait-interpolation))
          (send server :set-succeeded (send server :result))
          (when *auto-lookground*
@@ -645,64 +655,64 @@
     (> (norm (v- av rv)) 5)))
 
 (defun robot-angle-straight ()
-  (if (or (string= *robot-name* "JAXON")
-          (string= *robot-name* "JAXON_RED"))
-      (progn
-        (walking-pose *robot*
-                      ;;:default-pose-method :narrow-width-pose
-                      :default-pose-method :reset-manip-pose
-                      ;;:root-link-height-offset -80 ; -140 for stair
-                      ;; :root-link-pitch-offset 5    ;20 for stair
-                      ;;:root-link-pitch-offset 20
-                      ;;:root-link-height-offset -140 ; for stair
-                      :root-link-height-offset -100 ; for stair
-                      ;;:chest-link-pitch-offset 20 ; for stair
-                      ;; :chest-link-pitch-offset 5
-                      :root-link-pitch-offset 10
-                      )
-          ;; (walking-pose *robot*
-          ;;       :default-pose-method :narrow-width-pose
-          ;;       :root-link-height-offset -140
-          ;;       :root-link-pitch-offset 20
-          ;;       :chest-link-pitch-offset 20)
-        (send *robot* :head :neck-p :joint-angle 35))
-    (walking-pose *robot* :root-link-height-offset -50 :root-link-pitch-offset 5))
-  ;; Check if we need to move robot or not
-  (when (need-to-send-angle-vector-p *robot*)
-    ;;(send *ri* :angle-vector (send *robot* :angle-vector) 5000)
-    (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
-    (send *ri* :wait-interpolation))
+  ;; (if (or (string= *robot-name* "JAXON")
+  ;;         (string= *robot-name* "JAXON_RED"))
+  ;;     (progn
+  ;;       (walking-pose *robot*
+  ;;                     ;;:default-pose-method :narrow-width-pose
+  ;;                     :default-pose-method :reset-manip-pose
+  ;;                     ;;:root-link-height-offset -80 ; -140 for stair
+  ;;                     ;; :root-link-pitch-offset 5    ;20 for stair
+  ;;                     ;;:root-link-pitch-offset 20
+  ;;                     ;;:root-link-height-offset -140 ; for stair
+  ;;                     :root-link-height-offset -100 ; for stair
+  ;;                     ;;:chest-link-pitch-offset 20 ; for stair
+  ;;                     ;; :chest-link-pitch-offset 5
+  ;;                     :root-link-pitch-offset 10
+  ;;                     )
+  ;;         ;; (walking-pose *robot*
+  ;;         ;;       :default-pose-method :narrow-width-pose
+  ;;         ;;       :root-link-height-offset -140
+  ;;         ;;       :root-link-pitch-offset 20
+  ;;         ;;       :chest-link-pitch-offset 20)
+  ;;       (send *robot* :head :neck-p :joint-angle 35))
+  ;;   (walking-pose *robot* :root-link-height-offset -50 :root-link-pitch-offset 5))
+  ;; ;; Check if we need to move robot or not
+  ;; (when (need-to-send-angle-vector-p *robot*)
+  ;;   ;;(send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+  ;;   (send *ri* :angle-vector (send *robot* :angle-vector) 2000)
+  ;;   (send *ri* :wait-interpolation))
   )
 
 (defun robot-angle-straight-ease ()
-  (if (or (string= *robot-name* "JAXON")
-          (string= *robot-name* "JAXON_RED"))
-      (progn
-        (walking-pose *robot*
-                      ;;:default-pose-method :narrow-width-pose
-                      :default-pose-method :reset-manip-pose
-                      ;;:root-link-height-offset -80 ; -140 for stair
-                      ;; :root-link-pitch-offset 5    ;20 for stair
-                      ;;:root-link-pitch-offset 20
-                      ;;:root-link-height-offset -140 ; for stair
-                      :root-link-height-offset -40 ; for stair
-                      ;;:chest-link-pitch-offset 20 ; for stair
-                      ;; :chest-link-pitch-offset 5
-                      :root-link-pitch-offset 10
-                      )
-        ;; (walking-pose *robot*
-        ;;               :default-pose-method :narrow-width-pose
-        ;;               :root-link-height-offset -140
-        ;;               :root-link-pitch-offset 20
-        ;;               :chest-link-pitch-offset 20)
-        ;; (send *robot* :head :neck-p :joint-angle 35)
-        )
-    (walking-pose *robot* :root-link-height-offset -50 :root-link-pitch-offset 5))
-  ;; Check if we need to move robot or not
-  (when (need-to-send-angle-vector-p *robot*)
-    ;;(send *ri* :angle-vector (send *robot* :angle-vector) 5000)
-    (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
-    (send *ri* :wait-interpolation))
+  ;; (if (or (string= *robot-name* "JAXON")
+  ;;         (string= *robot-name* "JAXON_RED"))
+  ;;     (progn
+  ;;       (walking-pose *robot*
+  ;;                     ;;:default-pose-method :narrow-width-pose
+  ;;                     :default-pose-method :reset-manip-pose
+  ;;                     ;;:root-link-height-offset -80 ; -140 for stair
+  ;;                     ;; :root-link-pitch-offset 5    ;20 for stair
+  ;;                     ;;:root-link-pitch-offset 20
+  ;;                     ;;:root-link-height-offset -140 ; for stair
+  ;;                     :root-link-height-offset -40 ; for stair
+  ;;                     ;;:chest-link-pitch-offset 20 ; for stair
+  ;;                     ;; :chest-link-pitch-offset 5
+  ;;                     :root-link-pitch-offset 10
+  ;;                     )
+  ;;       ;; (walking-pose *robot*
+  ;;       ;;               :default-pose-method :narrow-width-pose
+  ;;       ;;               :root-link-height-offset -140
+  ;;       ;;               :root-link-pitch-offset 20
+  ;;       ;;               :chest-link-pitch-offset 20)
+  ;;       ;; (send *robot* :head :neck-p :joint-angle 35)
+  ;;       )
+  ;;   (walking-pose *robot* :root-link-height-offset -50 :root-link-pitch-offset 5))
+  ;; ;; Check if we need to move robot or not
+  ;; (when (need-to-send-angle-vector-p *robot*)
+  ;;   ;;(send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+  ;;   (send *ri* :angle-vector (send *robot* :angle-vector) 2000)
+  ;;   (send *ri* :wait-interpolation))
   )
 
 (defun robot-angle-rolling (policy)
@@ -719,17 +729,20 @@
        )
     (robot-angle-straight))
   (when (need-to-send-angle-vector-p *robot*)
-    (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
+    (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
     (send *ri* :wait-interpolation))
   )
 
 
 (defun set-parameter-for-rolling ()
-  (high-step-stair-param-hrp2jsk)
+  ;;(high-step-stair-param-hrp2jsk)
   (send *ri* :set-gait-generator-param
-        :stair-trajectory-way-point-offset #f(0.03 -0.0 0)
-        :swing-trajectory-delay-time-offset 0.2
-        :default-double-support-static-ratio 0.0
+        ;;:stair-trajectory-way-point-offset #f(0.03 -0.0 0)
+        ;;:swing-trajectory-delay-time-offset 0.2
+        ;;:default-double-support-static-ratio 0.0
+        :default-step-height 0.08
+        :default-orbit-type :stair
+        :default-step-time 1.5
         ))
 
 (defun set-parameter-for-planar-rolling ()
@@ -737,33 +750,34 @@
           (string= "JAXON_RED" *robot-name*))
       (set-parameter-for-planar-jaxon)
     (roll-terrain-stair-param-hrp2jsk))
-  (send *ri* :set-gait-generator-param
-        :stair-trajectory-way-point-offset #f(0.03 -0.0 0)
-        :swing-trajectory-delay-time-offset 0.2
-        :default-double-support-static-ratio 0.0
-        :default-double-support-ratio 0.35
-        :toe-angle 0 :heel-angle 0
-        :default-step-time 0.6
-        ))
-
+  ;; (send *ri* :set-gait-generator-param
+  ;;       ;;:stair-trajectory-way-point-offset #f(0.03 -0.0 0)
+  ;;       ;;:swing-trajectory-delay-time-offset 0.2
+  ;;       ;;:default-double-support-static-ratio 0.0
+  ;;       ;;:default-double-support-ratio 0.35
+  ;;       ;;:toe-angle 0 :heel-angle 0
+  ;;       ;;:default-step-time 0.8
+  ;;       ))
+  )
 (defun set-parameter-for-stair ()
-  (default-stair-param-hrp2jsk)
+  ;;(default-stair-param-hrp2jsk)
   (send *ri* :set-gait-generator-param
-        :toe-heel-phase-ratio #f(0.02 0.28 0.2 0.0 0.2 0.25 0.05)
+        ;;:toe-heel-phase-ratio #f(0.02 0.28 0.2 0.0 0.2 0.25 0.05)
         ;;:stair-trajectory-way-point-offset #f(0.05 0.0 0)
-        :stair-trajectory-way-point-offset #f(0.03 -0.0 0)
+        ;;:stair-trajectory-way-point-offset #f(0.03 -0.0 0)
         :default-step-height 0.07
         ;; :stair-trajectory-way-point-offset #f(0.03 -0.0 0)
-        :swing-trajectory-delay-time-offset 0.2
-        :default-step-time 1.7
-        :default-double-support-ratio 0.29
-        :default-double-support-static-ratio 0.117
+        ;;:swing-trajectory-delay-time-offset 0.2
+        :default-step-time 1.5
+        :default-orbit-type :stair
+        ;;:default-double-support-ratio 0.29
+        ;;:default-double-support-static-ratio 0.117
         )
-  (when (or (string= "JAXON" *robot-name*)
-            (string= "JAXON_RED" *robot-name*))
-    (send *ri* :set-auto-balancer-param :default-zmp-offsets
-          (list (float-vector -20 0 0) (float-vector -20 0 0)))
-    )
+  ;; (when (or (string= "JAXON" *robot-name*)
+  ;;           (string= "JAXON_RED" *robot-name*))
+  ;;   (send *ri* :set-auto-balancer-param :default-zmp-offsets
+  ;;         (list (float-vector -20 0 0) (float-vector -20 0 0)))
+  ;;   )
   ;; (send *ri* :set-auto-balancer-param :default-zmp-offsets
   ;;       (list (float-vector 0 -10 0) (float-vector 0 10 0)))
   ;; (send *ri* :set-gait-generator-param
@@ -813,11 +827,11 @@
   (send *ri* :set-gait-generator-param
         ;;:default-orbit-type :cycloid
         :default-orbit-type :cycloiddelay
-        :swing-trajectory-delay-time-offset 0.15
+        ;; :swing-trajectory-delay-time-offset 0.15
         :toe-angle 0 :heel-angle 0
-        :default-step-time 0.6
-        :default-double-support-ratio 0.35
-        :default-double-support-static-ratio 0.0
+        :default-step-time 0.8
+        ;; :default-double-support-ratio 0.35
+        ;; :default-double-support-static-ratio 0.0
         ;;:default-double-support-ratio 0.16
         :default-step-height 0.065)
   ;; [[0.010, 0.01, 0], [0.010, -0.01, 0]]
@@ -865,7 +879,6 @@
                      :execute-cb 'execute-cb
                      :preempt-cb 'preempt-cb)))
     (ros::rate 10)
-    (send *ri* :set-gait-generator-param :default-step-time 0.6)
     (ros::ros-info "footstep controller is ready")
     (while (ros::ok)
       (send s :worker)

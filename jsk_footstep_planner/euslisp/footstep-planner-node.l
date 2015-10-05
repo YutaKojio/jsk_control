@@ -401,7 +401,7 @@
                       (make-coords :pos (float-vector x y 0)
                                    :rpy (float-vector (deg2rad theta) 0 0))))
                 (cdr (assoc :successors param))))
-  (setq *footstep-transifion-first-successors*
+  (setq *footstep-transition-first-successors*
         (mapcar #'(lambda (successor-param)
                     (let ((x (cdr (assoc :x successor-param)))
                           (y (cdr (assoc :y successor-param)))
@@ -409,7 +409,7 @@
                       (make-coords :pos (float-vector x y 0)
                                    :rpy (float-vector (deg2rad theta) 0 0))))
                 (cdr (assoc :transition-first-successors param))))
-  (setq *footstep-transifion-second-successors*
+  (setq *footstep-transition-second-successors*
         (mapcar #'(lambda (successor-param)
                     (let ((x (cdr (assoc :x successor-param)))
                           (y (cdr (assoc :y successor-param)))

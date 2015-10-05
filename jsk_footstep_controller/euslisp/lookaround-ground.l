@@ -81,10 +81,15 @@
   (send *ri* :wait-interpolation)
   )
 
+(defun need-to-send-angle-vector-p (r)
+  (let ((av (send r :angle-vector))
+        (rv (send *ri* :state :reference-vector)))
+    (> (norm (v- av rv)) 5)))
+
 (defun do-lookaround-jaxon ()
   (walking-pose *robot*
                 :default-pose-method :reset-pose
-                :root-link-height-offset -80
+                :root-link-height-offset -110
                 :root-link-pitch-offset 20
                 :chest-link-pitch-offset 20)
   ;; (walking-pose *robot*
@@ -95,24 +100,26 @@
 
   (send *robot* :head :neck-p :joint-angle 35)
   ;;(send *robot* :torso :waist-p :joint-angle 35) ; it's not working because of model bug
-  (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
-  (send *ri* :wait-interpolation)
+  (when (need-to-send-angle-vector-p *robot*)
+    (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
+    (send *ri* :wait-interpolation))
   (if (ros::service-exists "/tilt_laser_listener/clear_cache")
       (call-empty-service "/tilt_laser_listener/clear_cache")
     )
+  ;;(call-empty-service "/tilt_laser_listener/clear_cache")
   ;; Call /locomotion/input/request
   (call-empty-service "/locomotion/input/request")
   ;; Wait for next publish
   (wait-for-snapshot-publish)
-  (send *robot* :reset-pose)
+  ;; (send *robot* :reset-pose)
   ;; (walking-pose *robot*
   ;;               :default-pose-method :narrow-width-pose
   ;;               :root-link-height-offset -140
   ;;               :root-link-pitch-offset 20
   ;;               :chest-link-pitch-offset 20)
 
-  (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
-  (send *ri* :wait-interpolation)
+  ;; (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+  ;; (send *ri* :wait-interpolation)
   )
 
 #|
@@ -147,6 +154,7 @@
          (if (ros::service-exists "/tilt_laser_listener/clear_cache")
              (call-empty-service "/tilt_laser_listener/clear_cache")
            )
+         ;; (call-empty-service "/tilt_laser_listener/clear_cache")
          ;; Call /locomotion/input/request
          (call-empty-service "/locomotion/input/request")
          ;; Wait for next publish

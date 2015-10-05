@@ -329,7 +329,7 @@
         (R   P-  H0  R   S   H)
         (R   P-  H+  R   S   H)
         (R   P-  H-  R   S   H)
-        (R   R   H0  R   R   R)
+        (R   R   H0  R   R   H)
         (R   R   H+  R   R   H)
         (R   R   H-  R   R   H)))
 
@@ -826,7 +826,7 @@
   ;;       :default-step-height 0.05)
   (send *ri* :set-gait-generator-param
         ;;:default-orbit-type :cycloid
-        :default-orbit-type :cycloiddelay
+        :default-orbit-type :stair
         ;; :swing-trajectory-delay-time-offset 0.15
         :toe-angle 0 :heel-angle 0
         :default-step-time 0.8
